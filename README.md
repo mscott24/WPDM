@@ -7,4 +7,4 @@ As an implementation example, please refer to sample code.R. For additional deta
 
 For questions, please contact **mscott24@bu.edu**.
 
-Author: Matthew Scott, PhD Candidate, Boston University Department of Biostatistics
+Author: Matthew R. Scott, PhD Candidate, Boston University Department of Biostatistics
