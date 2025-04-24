@@ -4,3 +4,7 @@ Run a Wiener process degradation model (WPDM) using first difference estimators.
 - Profile likelihood methods with maximum likelihood or empirically unbiased estimators
 
 As an implementation example, please refer to sample code.R. For additional details, review the documentation in the primary function WPDM.R.
+
+For questions, please contact **mscott24@bu.edu**.
+
+Author: Matthew Scott, PhD Candidate, Boston University Department of Biostatistics
