@@ -1,6 +1,3 @@
-rm(list = ls())
-setwd('/project/jointage/matt/DM/paper/')
-source('/project/jointage/matt/DM/paper/Functions.R')
 ToeplitzInv <- function(n, c) {
   #compute the inverse of the tri-diagonal Toeplitz matrix with constant diagonal 
   #entries c and off-diagonals -1 using the formula based on roots r and s 
