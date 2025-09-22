@@ -57,6 +57,22 @@
 #' print(result$stats)
 #' }
 
+require(MASS)
+require(rlang)
+require(tidyr)
+require(dplyr)
+require(data.table)
+require(pbapply)
+require(parallel)
+
+files <- c("functions/profile_u.R", 
+           "functions/profile_mle.R", 
+           "functions/optim_ll.R", 
+           "functions/utility.R", 
+           "functions/simulations.R", 
+           "functions/derivatives.R")
+invisible(lapply(files, function(f) source(f, echo = FALSE)))
+
 WPDM <- function(df, idvar, timevar, Yvar, estimator, modtype, params0, ...) {
   
   #default values
@@ -65,21 +81,6 @@ WPDM <- function(df, idvar, timevar, Yvar, estimator, modtype, params0, ...) {
   if (missing(Yvar)) {Yvar <- 'Y'}
   if (missing(estimator)) {estimator <- 'optim'} 
   if (missing(modtype)) {modtype <- 'm3'} 
-  
-  require(MASS)
-  require(rlang)
-  require(tidyr)
-  require(dplyr)
-  require(pbapply)
-  require(parallel)
-  
-  files <- c("functions/profile_u.R", 
-             "functions/profile_mle.R", 
-             "functions/optim_ll.R", 
-             "functions/utility.R", 
-             "functions/simulations.R", 
-             "functions/derivatives.R")
-  invisible(lapply(files, function(f) source(f, echo = FALSE)))
   
   df <- FormatDiffDF(df = df, 
                      idvar = idvar, 

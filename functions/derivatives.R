@@ -78,6 +78,7 @@ calcGrad <- function(df, params, ...) {
 }
 calcCIs <- function(df, results) {
   
+  var_names <- names(results)
   par <- as.numeric(results)
   fim <- -calcHessian(df=df, params = par)
   varcov <- solve(fim)
@@ -101,7 +102,11 @@ calcCIs <- function(df, results) {
     }
   }
   
-  out <- data.frame(Estimate = par, SE = se, CI_lower = ci_lb, CI_upper = ci_ub)
+  out <- data.frame(Parameter = names(results), 
+                    Estimate = par,
+                    SE = se, 
+                    CI_lower = ci_lb, 
+                    CI_upper = ci_ub)
   
   return(out)
 }

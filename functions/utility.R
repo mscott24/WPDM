@@ -38,9 +38,9 @@ MakeLong <- function(data, time, ...) {
   
   return(long_tbl)
 }
-AddDiff <- function(df, Y, Patient, t, ...) {
+AddDiff <- function(df, Yvar, idvar, timevar, ...) {
   df %>%
-    rename(Y = {{Y}}, Patient = {{Patient}}, t = {{t}}) %>%
+    rename(Patient = {{idvar}}, t = {{timevar}}, Y = {{Yvar}}) %>%
     arrange(Patient, t) %>%
     group_by(Patient) %>%
     mutate(V = Y - lag(Y),

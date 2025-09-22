@@ -113,29 +113,19 @@ psi_ll_u_m3 <- function(df, psi, ...) {
   ll <- sum(sapply(ll_f, function(x) x))
 }
 u_m3 <- function(df, psi0, ...) {
-  
+  if (missing(psi0)) {psi0 <- 1}
   stats_m3 <- list()
-  tryCatch({
-    result <- optim(par = psi0, 
-                    fn = psi_ll_u_m3, df = df, 
-                    method = "L-BFGS-B", 
-                    lower = 1e-3, upper = Inf,
-                    control = list(fnscale = -1))
-    
-    stats_m3$psi <- result$par
-    stats_m3$mu <- mu_u_m3(df = df, psi = stats_m3$psi)
-    stats_m3$sigma_sq <- sigma_sq_u_m3(df = df, psi = stats_m3$psi)
-    stats_m3$sigma_sq_mu <- sigma_sq_mu_u_m3(df = df, psi = stats_m3$psi)
-    stats_m3$sigma_sq_ep <- stats_m3$psi * stats_m3$sigma_sq
-    
-  }, error = function(e) {
-    stats_m3$psi <- NULL
-    stats_m3$mu <- NULL
-    stats_m3$sigma_sq <- NULL
-    stats_m3$sigma_sq_mu <- NULL
-    stats_m3$sigma_sq_ep <- NULL
-    
-    message("optim failed: ", e$message)
-  })
+  result <- optim(par = psi0, 
+                  fn = psi_ll_u_m3, df = df, 
+                  method = "L-BFGS-B", 
+                  lower = 1e-3, upper = Inf,
+                  control = list(fnscale = -1, 
+                                 maxit = 1000))
+  
+  stats_m3$psi <- result$par
+  stats_m3$mu <- mu_u_m3(df = df, psi = stats_m3$psi)
+  stats_m3$sigma_sq <- sigma_sq_u_m3(df = df, psi = stats_m3$psi)
+  stats_m3$sigma_sq_mu <- sigma_sq_mu_u_m3(df = df, psi = stats_m3$psi)
+  stats_m3$sigma_sq_ep <- stats_m3$psi * stats_m3$sigma_sq
   return(stats_m3)
 }
