@@ -2,4 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-*.RData
+delta*
+followup_time_checks
+nfu_checks
+nfu*
+param_checks
+sim*
