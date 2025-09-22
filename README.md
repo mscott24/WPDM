@@ -12,6 +12,6 @@ Note, simulation data from the manuscript is organized as:
 
 1.  sim1: $\mu$=-1.00, $\sigma^2 = 0.25$, $\sigma_{\mu}^2=0.25$, $\sigma_{\varepsilon}^2 = 0.25$
 2.  sim2: $\mu$=-1.00, $\sigma^2 = 0.25$, $\sigma_{\mu}^2=0.05$, $\sigma_{\varepsilon}^2 = 0.49$
-3.  param_checks**:** additional simulations in the Supporting Information
-4.  nfu_checks:simulations relating to Figure S2 in the Supporting Information
-5.  followup_time_checks: simulations relating to Figure 1 focusing on clustering of follow-up times.
+3.  followup_time_checks: simulations relating to Figure 1 focusing on clustering of follow-up times.
+
+Data from Supporting Information can be generated from run_simulations.R.
