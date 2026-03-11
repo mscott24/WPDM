@@ -4,7 +4,7 @@ run_profile_u <- function(df, modtype, params0, ...) {
   if (!all(c("V", "tau", "Patient") %in% names(df))) {
     stop('Missing columns (V, tau, or Patient) in df')
   }
-   
+  
   if (modtype=='m2') {
     stats <- u_m2(df=df)
   } else if (modtype=='m3') {
@@ -20,23 +20,33 @@ run_profile_u <- function(df, modtype, params0, ...) {
 #M2
 u_m2 <- function(df, ...) {
   patient_df <- split(df, df$Patient, drop = TRUE)
-  n <- length(patient_df)
+  N <- length(patient_df)
   lamda_sigma_f <- lapply(patient_df, function(data) {
     lamda_i <- sum(data$V) / sum(data$tau)
-    sigma_sq_i <- sum((data$V - lamda_i * data$tau)^2 / (((nrow(data)-1)) * data$tau))
+    if (nrow(data) == 1) {
+      sigma_sq_i <- NA_real_
+    } else {
+      sigma_sq_i <- sum((data$V - lamda_i * data$tau)^2 / (((nrow(data)-1)) * data$tau))
+    }
     return(list(lamda_i = lamda_i, sigma_sq_i = sigma_sq_i))
   })
   
   sigma_sq_mu_2_f <- lapply(patient_df, function(data) {
     lamda_i <- sum(data$V) / sum(data$tau)
-    sigma_sq_i <- sum((data$V - lamda_i * data$tau)^2 / (((nrow(data)-1)*sum(data$tau)) * data$tau))
+    if (nrow(data) == 1) {
+      sigma_sq_i <- NA_real_
+    } else {
+      sigma_sq_i <- sum((data$V - lamda_i * data$tau)^2 / (((nrow(data)-1)*sum(data$tau)) * data$tau))
+    }
   })
   
-  sigma_sq <- sum(sapply(lamda_sigma_f, function(x) x$sigma_sq_i))/n
-  mu <- sum(sapply(lamda_sigma_f, function(x) x$lamda_i))/n
+  sigma_sq_vals <- sapply(lamda_sigma_f, function(x) x$sigma_sq_i)
+  sigma_sq_mu_2_vals <- sapply(sigma_sq_mu_2_f, function(x) x)
+  sigma_sq <- mean(sigma_sq_vals, na.rm=TRUE)
+  mu <- sum(sapply(lamda_sigma_f, function(x) x$lamda_i))/N
   lamda <- sapply(lamda_sigma_f, function(x) x$lamda_i)
-  sigma_sq_mu_1 <- sum((mu-lamda)^2)/(n-1) 
-  sigma_sq_mu_2 <- sum(sapply(sigma_sq_mu_2_f, function(x) x))/n
+  sigma_sq_mu_1 <- sum((mu-lamda)^2)/(N-1) 
+  sigma_sq_mu_2 <- mean(sigma_sq_mu_2_vals, na.rm=TRUE)
   sigma_sq_mu <- sigma_sq_mu_1 - sigma_sq_mu_2
   
   stats_m2 <- list()
@@ -48,14 +58,14 @@ u_m2 <- function(df, ...) {
 
 #M3
 mu_u_m3 <- function(df, psi, ...){
-  patient_df <- split(df, df$Patient, drop = TRUE)
+  patient_df <- split(df, df$Patient, drop=TRUE)
   n <- length(patient_df)
   mu_f <- lapply(patient_df, function(data) {
-    S <- diag(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, nrow(data)-2)))
+    S <- diag(as.numeric(data$tau), nrow = nrow(data), ncol = nrow(data))
+    A <- toeplitz(c(2, -1, rep(0, max(0, nrow(data)-2)))[1:nrow(data)])
     D <- S + psi*A
-    lamda_i <- (t(data$V) %*% solve(D) %*% data$tau) / 
-      (t(data$tau) %*% solve(D) %*% data$tau)
+    lamda_i <- as.numeric((t(data$V) %*% solve(D) %*% data$tau) / 
+                            (t(data$tau) %*% solve(D) %*% data$tau))
   })
   return(sum(sapply(mu_f, function(x) x))/n)
 }
@@ -63,29 +73,34 @@ sigma_sq_u_m3 <- function(df, psi, ...){
   patient_df <- split(df, df$Patient, drop = TRUE)
   n <- length(patient_df)
   sigma_sq_f <- lapply(patient_df, function(data) {
-    S <- diag(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, nrow(data)-2)))
+    if (nrow(data) == 1) {return(NA_real_)}
+    S <- diag(as.numeric(data$tau), nrow = nrow(data), ncol = nrow(data))
+    A <- toeplitz(c(2, -1, rep(0, max(0, nrow(data)-2)))[1:nrow(data)])
     D <- S + psi*A
     lamda_i <- as.numeric((t(data$V) %*% solve(D) %*% data$tau) / 
                             (t(data$tau) %*% solve(D) %*% data$tau))
-    sigma_sq_i <- (t(data$V - lamda_i) %*% solve(D) %*% (data$V - lamda_i)) / (nrow(data)-1)
+    sigma_sq_i <- (t(data$V - lamda_i*data$tau) %*% solve(D) %*% (data$V - lamda_i*data$tau)) / (nrow(data)-1)
   })
-  return(sum(sapply(sigma_sq_f, function(x) x))/n)
+  return(mean(sapply(sigma_sq_f, function(x) x), na.rm=TRUE))
 }
 sigma_sq_mu_u_m3 <- function(df, psi, ...){
   patient_df <- split(df, df$Patient, drop = TRUE)
   n <- length(patient_df)
   sigma_sq_mu2_f <- lapply(patient_df, function(data) {
-    S <- diag(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, nrow(data)-2)))
+    S <- diag(as.numeric(data$tau), nrow = nrow(data), ncol = nrow(data))
+    A <- toeplitz(c(2, -1, rep(0, max(0, nrow(data)-2)))[1:nrow(data)])
     D <- S + psi*A
     lamda_i <- as.numeric((t(data$V) %*% solve(D) %*% data$tau) / 
                             (t(data$tau) %*% solve(D) %*% data$tau))
-    sigma_sq_mu_i <- as.numeric((t(data$V - lamda_i*data$tau) %*% solve(D) %*% (data$V - lamda_i*data$tau)) / 
-                                  ((nrow(data)-1) * (t(data$tau) %*% solve(D) %*% (data$tau))))
+    if (nrow(data) == 1) {
+      sigma_sq_mu_i <- NA_real_
+    } else {
+      sigma_sq_mu_i <- as.numeric((t(data$V - lamda_i*data$tau) %*% solve(D) %*% (data$V - lamda_i*data$tau)) / 
+                                    ((nrow(data)-1) * (t(data$tau) %*% solve(D) %*% (data$tau))))
+    }
     return(list(sigma_sq_mu_i=sigma_sq_mu_i, lamda_i=lamda_i))
   })
-  sigma_sq_mu_2 <- sum(sapply(sigma_sq_mu2_f, function(x) x$sigma_sq_mu_i))/n
+  sigma_sq_mu_2 <- mean(sapply(sigma_sq_mu2_f, function(x) x$sigma_sq_mu_i), na.rm=TRUE)
   lamda <- sapply(sigma_sq_mu2_f, function(x) x$lamda_i)
   mu <- sum(sapply(sigma_sq_mu2_f, function(x) x$lamda_i))/n
   sigma_sq_mu_1 <- sum((mu-lamda)^2)/(n-1) 
@@ -99,12 +114,12 @@ psi_ll_u_m3 <- function(df, psi, ...) {
   sigma_sq_ep <- psi * sigma_sq
   
   patient_df <- split(df, df$Patient, drop = TRUE)
-  n <- length(patient_df)
+  N <- length(patient_df)
   ll_f <- lapply(patient_df, function(data) {
-    S <- diag(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, nrow(data)-2)))
+    S <- diag(as.numeric(data$tau), nrow = nrow(data), ncol = nrow(data))
+    A <- toeplitz(c(2, -1, rep(0, max(0, nrow(data)-2)))[1:nrow(data)])
     D <- S + psi*A
-    Omega <- sigma_sq_mu * data$tau %*% t(data$tau) + sigma_sq * D
+    Omega <- sigma_sq_mu * tcrossprod(data$tau) + sigma_sq * D
     ll <- (-1)* log(2*pi)/2 * length(data$tau) - 
       (1/2) * log(det(Omega)) - 
       (1/2) * t(data$V - mu * data$tau) %*% solve(Omega) %*% (data$V - mu * data$tau)

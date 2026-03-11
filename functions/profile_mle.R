@@ -1,6 +1,6 @@
 #interface function that runs user specified models
 run_profile_mle <- function(df, modtype, params0, ...) { 
-
+  
   if (!all(c("V", "tau", "Patient") %in% names(df))) {
     stop('Missing columns (V, tau, or Patient) in df')
   }

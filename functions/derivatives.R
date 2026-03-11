@@ -6,11 +6,14 @@ calcHessian <- function(df, params, ...) {
   patient_df <- split(df, df$Patient, drop = TRUE)
   
   compute_hess_i <- function(data, params) {
-    S <- diag(data$tau, nrow = length(data$tau), ncol = length(data$tau))
-    n <- length(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, n - 2)))
+    tau <- as.numeric(data$tau)
+    V <- as.numeric(data$V)
+    n <- length(tau)
+    S <- diag(tau, nrow = n, ncol = n)
+    A_first_row <- c(2, -1, rep(0, max(0, n-2)))
+    A <- toeplitz(A_first_row[1:n])
     Omega <- params[2] * S +
-      params[3] * data$tau %*% t(data$tau) +
+      params[3] * tcrossprod(tau) +
       params[4] * A
     
     if (det(Omega) < 1e-4) {  
@@ -19,10 +22,10 @@ calcHessian <- function(df, params, ...) {
     }
     
     Omega_inv <- solve(Omega)
-    ders <- list(S, data$tau %*% t(data$tau), A)
+    ders <- list(S, tcrossprod(tau), A)
     
     hess_i <- matrix(nrow=n_parms, ncol=n_parms)
-    hess_i[1,1] <- t(data$tau) %*% Omega_inv %*% data$tau 
+    hess_i[1,1] <- t(tau) %*% Omega_inv %*% tau
     hess_i[1,2:n_parms] <- hess_i[2:n_parms,1] <- 0
     for (i in 2:n_parms) { 
       for (j in 2:n_parms) {
@@ -39,17 +42,20 @@ calcHessian <- function(df, params, ...) {
 }
 calcGrad <- function(df, params, ...) {
   
-  n_parms <- length(param)
+  n_parms <- length(params)
   if (length(params) < 4) {params[(length(params)+1):4] <- 0}
   
   patient_df <- split(df, df$Patient, drop = TRUE)
   
   compute_grad_i <- function(data, params) {
-    S <- diag(data$tau, nrow = length(data$tau), ncol = length(data$tau))
-    n <- length(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, n - 2)))
+    tau <- as.numeric(data$tau)
+    V <- as.numeric(data$V)
+    n <- length(tau)
+    S <- diag(tau, nrow = n, ncol = n)
+    A_first_row <- c(2, -1, rep(0, max(0, n-2)))
+    A <- toeplitz(A_first_row[1:n])
     Omega <- params[2] * S +
-      params[3] * data$tau %*% t(data$tau) +
+      params[3] * tcrossprod(tau) +
       params[4] * A
     
     if (det(Omega) < 1e-4) {  
@@ -58,20 +64,20 @@ calcGrad <- function(df, params, ...) {
     }
     
     Omega_inv <- solve(Omega)
-    ders <- list(S,data$tau %*% t(data$tau),A)
+    ders <- list(S, tcrossprod(tau), A)
     
     grad_i <- matrix(nrow=n_parms, ncol=1)
-    grad_i[1] <- t(data$tau) %*% Omega_inv %*% (data$V - params[1] *data$tau)
+    grad_i[1] <- t(tau) %*% Omega_inv %*% (V - params[1] * tau)
     for (p in 2:(n_parms)) {
       grad_i[p] <-  (-1) * 0.5 * (sum(diag(Omega_inv %*% ders[[p-1]])) - 
-                                    t(data$V - params[1] *data$tau) %*% 
+                                    t(V - params[1] * tau) %*% 
                                     Omega_inv %*% ders[[p-1]] %*% Omega_inv %*%
-                                    (data$V - params[1] *data$tau))
+                                    (V - params[1] * tau))
     }
     return(grad_i)
   }
   
-  grad_elements <- lapply(patient_df, function(data) compute_grad_i(data, param))
+  grad_elements <- lapply(patient_df, function(data) compute_grad_i(data, params))
   grad <- Reduce(`+`, grad_elements)
   
   return(grad)
@@ -81,6 +87,9 @@ calcCIs <- function(df, results) {
   var_names <- names(results)
   par <- as.numeric(results)
   fim <- -calcHessian(df=df, params = par)
+  if (kappa(fim) > 1e8) {
+    print('condition number of information matrix unstable')
+  }
   varcov <- solve(fim)
   se <- sqrt(diag(varcov))
   
@@ -110,4 +119,3 @@ calcCIs <- function(df, results) {
   
   return(out)
 }
-

@@ -60,21 +60,33 @@ run_optim_ll <- function(df, modtype, params0, ...) {
   
   return(stats)
 }
-ll <- function(df, params, ...) {
+ll <- function(params, df, ...) {
   
   if (length(params) < 4) {params[(length(params)+1):4] <- 0}
   
   patient_df <- split(df, df$Patient, drop = TRUE)
   func <- lapply(patient_df, function(data) {
-    S <- diag(data$tau)
-    n <- length(data$tau)
-    A <- toeplitz(c(2, -1, rep(0, n-2)))
+    tau <- as.numeric(data$tau)
+    V <- as.numeric(data$V)
+    n <- length(tau)
+    S <- diag(tau, nrow = n, ncol = n)
+    A_first_row <- c(2, -1, rep(0, max(0, n-2)))
+    A <- toeplitz(A_first_row[1:n])
+    
     Sigma <- params[2] * S + 
-      params[3] * data$tau %*% t(data$tau) + 
+      params[3] * tcrossprod(tau) + 
       params[4] * A
     
-    ll <- as.numeric((-1) * (n/2) * log(2*pi) - (1/2) * log(det(Sigma)) - 
-                       (1/2) * t(data$V - params[1] * data$tau) %*% solve(Sigma) %*% (data$V - params[1] * data$tau)) 
+    mu <- params[1] * tau
+    e <- V - mu
+    
+    ll <- as.numeric(
+      -(n/2) * log(2*pi) -
+        0.5 * log(det(Sigma)) -
+        0.5 * t(e) %*% solve(Sigma) %*% e
+    )
+    
+    ll
   })
   
   ll <- sum(sapply(func, function(x) x))
