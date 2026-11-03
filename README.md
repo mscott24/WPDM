@@ -4,12 +4,11 @@ This repository runs Wiener process degradation models (WPDMs) using first diffe
 
 1.  Optimization of the full joint likelihood
 
-2.  Profile likelihood methods with maximum likelihood or empirically unbiased estimators
+2.  Profile likelihood methods with empirical maximum likelihood or unbiased estimators
 
 As an implementation example, please refer to *sample code.R*. For additional details, review the documentation in the primary function *WPDM.R*.
 
-Note, simulation data from the manuscript is organized as:
+Note, primary simulation data from the manuscript is saved as:
 
 1.  sim1: $\mu$=-1.00, $\sigma^2 = 0.25$, $\sigma_{\mu}^2=0.25$, $\sigma_{\varepsilon}^2 = 0.25$
 2.  sim2: $\mu$=-1.00, $\sigma^2 = 0.25$, $\sigma_{\mu}^2=0.05$, $\sigma_{\varepsilon}^2 = 0.49$
-
